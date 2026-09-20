@@ -1,0 +1,20 @@
+# Kopieren nach ~/.config/moco-jira-bridge/config.yaml
+# Tokens kommen aus der Umgebung: MOCO_API_KEY, JIRA_API_TOKEN
+
+moco:
+  domain: mayflower          # https://<domain>.mocoapp.com
+  user_id: 12345             # eigene Moco-User-ID
+  projects:
+    - id: "1001"
+      marker: TG             # Tagesgeschäft
+    - id: "1002"
+      marker: RM             # Roadmap
+
+jira:
+  target: jira-cloud         # jira-cloud | tempo-cloud | tempo-server
+  base_url: https://kunde.atlassian.net
+  user: jo.brunner@mayflower.de
+
+ticket:
+  pattern: '^([A-Z][A-Z0-9]+-\d+)'
+  marker_pattern: '\(([^)]+)\)'
