@@ -13,6 +13,7 @@ import (
 
 	"moco-jira-bridge/internal/app"
 	"moco-jira-bridge/internal/config"
+	doctorpkg "moco-jira-bridge/internal/doctor"
 	"moco-jira-bridge/internal/jira"
 	"moco-jira-bridge/internal/moco"
 	"moco-jira-bridge/internal/parse"
@@ -141,7 +142,18 @@ func fail(err error) int {
 	return 2
 }
 
-// doctor wird in Task 12 implementiert.
+// doctor prüft beide Systeme. Die Tempo-Sonden dürfen fehlschlagen, ohne dass
+// das Tool unbrauchbar wäre — sie beantworten nur, welcher jira.target-Wert
+// bei diesem Kunden langfristig passt.
 func doctor(ctx context.Context, cfg *config.Config, httpClient *http.Client) int {
+	checks := doctorpkg.Run(ctx, cfg, httpClient, "")
+	if err := doctorpkg.WriteChecks(os.Stdout, checks); err != nil {
+		return fail(fmt.Errorf("Ausgabe fehlgeschlagen: %w", err))
+	}
+	for _, c := range checks {
+		if !c.OK && (c.Name == "Moco erreichbar" || c.Name == "Jira erreichbar") {
+			return 1
+		}
+	}
 	return 0
 }
