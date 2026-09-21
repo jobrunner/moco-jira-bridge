@@ -134,10 +134,14 @@ func (r Report) writeActions(w io.Writer) error {
 		}
 		fmt.Fprintf(w, "%s (%d):\n", verb, len(r.Planned))
 		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "DATUM\tTICKET\tDAUER\tKOMMENTAR")
+		fmt.Fprintln(tw, "DATUM\tSTART\tTICKET\tDAUER\tKOMMENTAR")
 		for _, a := range r.Planned {
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
-				a.Date.Format("2006-01-02"), a.Ticket, FormatDuration(a.Duration), a.Comment)
+			start := ""
+			if !a.Start.IsZero() {
+				start = a.Start.Format("15:04")
+			}
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n",
+				a.Date.Format("2006-01-02"), start, a.Ticket, FormatDuration(a.Duration), a.Comment)
 		}
 		if err := tw.Flush(); err != nil {
 			return err

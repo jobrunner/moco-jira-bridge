@@ -171,10 +171,14 @@ func (c *Cloud) worklogsForIssue(ctx context.Context, key string, from, to time.
 	return entries, nil
 }
 
-// Create legt einen Worklog auf dem Moco-Datum an. Die Uhrzeit ist bewusst
-// fix auf 09:00 lokal — wann gearbeitet wurde, ist für die Abrechnung irrelevant.
+// Create legt einen Worklog zum geplanten Startzeitpunkt an. Die Uhrzeiten
+// sind nur Kosmetik für die manuelle Prüfung in Tempo — abgerechnet wird der
+// Zeitbetrag; deshalb staffelt der Planer sie lediglich überlappungsfrei.
 func (c *Cloud) Create(ctx context.Context, w Worklog) error {
-	started := time.Date(w.Date.Year(), w.Date.Month(), w.Date.Day(), 9, 0, 0, 0, time.Local)
+	started := w.Start
+	if started.IsZero() {
+		started = time.Date(w.Date.Year(), w.Date.Month(), w.Date.Day(), 9, 0, 0, 0, time.Local)
+	}
 	body := map[string]any{
 		"started":          started.Format("2006-01-02T15:04:05.000-0700"),
 		"timeSpentSeconds": int(w.Duration.Seconds()),

@@ -12,11 +12,13 @@ import (
 
 func day(d int) time.Time { return time.Date(2026, 9, d, 0, 0, 0, 0, time.Local) }
 
+var clock = Clock{Hour: 8, Minute: 30, Loc: time.Local}
+
 func TestPlanBuchtNurDieDifferenz(t *testing.T) {
 	diffs := []model.Diff{{Ticket: "ABC-1", Date: day(18), Want: 120 * time.Minute, Have: 90 * time.Minute}}
 	moco := []model.Entry{{Ticket: "ABC-1", Date: day(18), Description: "ABC-1 Importfehler (TG)"}}
 
-	actions := Plan(diffs, moco)
+	actions := Plan(diffs, moco, clock)
 	if len(actions) != 1 {
 		t.Fatalf("erwarte 1 Aktion, got %+v", actions)
 	}
@@ -36,14 +38,14 @@ func TestPlanIgnoriertAusgeglicheneUndUeberhang(t *testing.T) {
 		{Ticket: "A", Date: day(18), Want: 60 * time.Minute, Have: 60 * time.Minute},
 		{Ticket: "B", Date: day(18), Want: 30 * time.Minute, Have: 60 * time.Minute},
 	}
-	if actions := Plan(diffs, nil); len(actions) != 0 {
+	if actions := Plan(diffs, nil, clock); len(actions) != 0 {
 		t.Fatalf("erwarte keine Aktionen, got %+v", actions)
 	}
 }
 
 func TestPlanOhnePassendeBeschreibungNutztFallback(t *testing.T) {
 	diffs := []model.Diff{{Ticket: "ABC-1", Date: day(18), Want: 60 * time.Minute}}
-	actions := Plan(diffs, nil)
+	actions := Plan(diffs, nil, clock)
 	if len(actions) != 1 || actions[0].Comment == "" {
 		t.Fatalf("erwarte eine Aktion mit Fallback-Kommentar, got %+v", actions)
 	}
@@ -51,8 +53,42 @@ func TestPlanOhnePassendeBeschreibungNutztFallback(t *testing.T) {
 
 func TestPlanIstIdempotentWennAusgeglichen(t *testing.T) {
 	diffs := []model.Diff{{Ticket: "ABC-1", Date: day(18), Want: 120 * time.Minute, Have: 120 * time.Minute}}
-	if actions := Plan(diffs, nil); len(actions) != 0 {
+	if actions := Plan(diffs, nil, clock); len(actions) != 0 {
 		t.Fatalf("zweiter Lauf muss ein No-Op sein, got %+v", actions)
+	}
+}
+
+func TestPlanStaffeltBuchungenEinesTagesHintereinander(t *testing.T) {
+	diffs := []model.Diff{
+		{Ticket: "A-1", Date: day(18), Want: 90 * time.Minute},
+		{Ticket: "A-2", Date: day(18), Want: 60 * time.Minute},
+		{Ticket: "A-3", Date: day(19), Want: 30 * time.Minute},
+	}
+	actions := Plan(diffs, nil, clock)
+	if len(actions) != 3 {
+		t.Fatalf("erwarte 3 Aktionen, got %+v", actions)
+	}
+	want := []string{"2026-09-18 08:30", "2026-09-18 10:00", "2026-09-19 08:30"}
+	for i, w := range want {
+		if got := actions[i].Start.Format("2006-01-02 15:04"); got != w {
+			t.Fatalf("actions[%d].Start = %s, want %s", i, got, w)
+		}
+	}
+}
+
+func TestPlanVerschiebtStartUmBereitsGebuchteZeit(t *testing.T) {
+	// 2h stehen schon in Jira (A-1 komplett, A-2 teilweise) — der neue
+	// Worklog beginnt nach diesen 2h, nicht wieder um 08:30.
+	diffs := []model.Diff{
+		{Ticket: "A-1", Date: day(18), Want: 90 * time.Minute, Have: 90 * time.Minute},
+		{Ticket: "A-2", Date: day(18), Want: 60 * time.Minute, Have: 30 * time.Minute},
+	}
+	actions := Plan(diffs, nil, clock)
+	if len(actions) != 1 {
+		t.Fatalf("erwarte 1 Aktion, got %+v", actions)
+	}
+	if got := actions[0].Start.Format("15:04"); got != "10:30" {
+		t.Fatalf("Start = %s, want 10:30 (08:30 + 2h vorhanden)", got)
 	}
 }
 

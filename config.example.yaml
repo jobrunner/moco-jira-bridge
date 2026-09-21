@@ -18,3 +18,7 @@ jira:
 ticket:
   pattern: '^([A-Z][A-Z0-9]+-\d+)'
   marker_pattern: '\(([^)]+)\)'
+
+sync:
+  start_time: "08:30"        # erster Worklog des Tages; weitere folgen lückenlos (Default 09:00)
+  timezone: Europe/Berlin    # Default: lokale Zeitzone

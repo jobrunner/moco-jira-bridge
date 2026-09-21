@@ -24,6 +24,7 @@ type App struct {
 	Moco            TimeSource
 	Jira            jira.Target
 	ExpectedMarkers map[string]string
+	Clock           syncpkg.Clock
 }
 
 // compare lädt beide Seiten und baut den gemeinsamen Report-Rumpf.
@@ -62,7 +63,7 @@ func (a *App) Sync(ctx context.Context, r timerange.Range, apply bool) (report.R
 		return report.Report{}, err
 	}
 
-	actions := syncpkg.Plan(diffs, mocoEntries)
+	actions := syncpkg.Plan(diffs, mocoEntries, a.Clock)
 	rep.Planned = actions
 	rep.DryRun = !apply
 	if !apply {

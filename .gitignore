@@ -2,3 +2,4 @@
 /dist/
 .env
 config.yaml
+.direnv

@@ -48,6 +48,11 @@ und Kalendertag gruppiert. Verglichen wird auf Minutengenauigkeit, zusätzlich
 auf Tages-, Wochen- und Monatssummen.
 
 Beim Sync wird je Gruppe nur die **Differenz** gebucht, auf dem Moco-Datum.
+Die Worklogs eines Tages werden gestaffelt: der erste beginnt zur
+konfigurierten `sync.start_time` (Default 09:00), jeder weitere direkt nach
+dem Ende des vorherigen — bereits in Jira gebuchte Zeit verschiebt den
+Startpunkt nach hinten. Die Uhrzeiten sind Kosmetik für die manuelle Prüfung
+in Tempo; abgerechnet wird der Zeitbetrag.
 Ein zweiter Lauf ohne Änderungen in Moco ist damit automatisch ein No-Op —
 es gibt weder Marker in den Jira-Kommentaren noch eine lokale State-Datei.
 

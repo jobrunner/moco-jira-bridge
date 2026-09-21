@@ -16,6 +16,7 @@ import (
 type Worklog struct {
 	Ticket   string
 	Date     time.Time
+	Start    time.Time // konkreter Startzeitpunkt; Fallback: 09:00 lokal am Date
 	Duration time.Duration
 	Comment  string
 }

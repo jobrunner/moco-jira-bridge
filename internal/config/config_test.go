@@ -111,6 +111,40 @@ func TestDefaultPathFallbackOhneLokaleDatei(t *testing.T) {
 	}
 }
 
+func TestStartClock(t *testing.T) {
+	t.Setenv("MOCO_API_KEY", "x")
+	t.Setenv("JIRA_API_TOKEN", "y")
+
+	c, err := Load(write(t, valid+"\nsync:\n  start_time: \"08:30\"\n  timezone: Europe/Berlin\n"))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	h, m, loc, err := c.StartClock()
+	if err != nil {
+		t.Fatalf("StartClock: %v", err)
+	}
+	if h != 8 || m != 30 || loc.String() != "Europe/Berlin" {
+		t.Fatalf("StartClock = %d:%d %v", h, m, loc)
+	}
+}
+
+func TestStartClockDefault(t *testing.T) {
+	c := &Config{}
+	h, m, _, err := c.StartClock()
+	if err != nil || h != 9 || m != 0 {
+		t.Fatalf("Default = %d:%d, err=%v — want 9:00", h, m, err)
+	}
+}
+
+func TestLoadFehlerBeiUngueltigerStartzeit(t *testing.T) {
+	t.Setenv("MOCO_API_KEY", "x")
+	t.Setenv("JIRA_API_TOKEN", "y")
+
+	if _, err := Load(write(t, valid+"\nsync:\n  start_time: \"25:99\"\n")); err == nil {
+		t.Fatal("erwarte Fehler bei ungültiger start_time")
+	}
+}
+
 func TestExpectedMarkers(t *testing.T) {
 	t.Setenv("MOCO_API_KEY", "x")
 	t.Setenv("JIRA_API_TOKEN", "y")

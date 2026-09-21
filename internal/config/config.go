@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -46,10 +47,37 @@ type TicketConfig struct {
 	MarkerPattern string `yaml:"marker_pattern"`
 }
 
+type SyncConfig struct {
+	StartTime string `yaml:"start_time"` // "HH:MM", Default 09:00
+	Timezone  string `yaml:"timezone"`   // IANA-Name, Default: lokale Zeitzone
+}
+
 type Config struct {
 	Moco   MocoConfig   `yaml:"moco"`
 	Jira   JiraConfig   `yaml:"jira"`
 	Ticket TicketConfig `yaml:"ticket"`
+	Sync   SyncConfig   `yaml:"sync"`
+}
+
+// StartClock übersetzt sync.start_time und sync.timezone in Stunde, Minute
+// und Zeitzone für die Staffelung der Worklogs.
+func (c *Config) StartClock() (hour, minute int, loc *time.Location, err error) {
+	spec := c.Sync.StartTime
+	if spec == "" {
+		spec = "09:00"
+	}
+	t, err := time.Parse("15:04", spec)
+	if err != nil {
+		return 0, 0, nil, fmt.Errorf("sync.start_time %q ist keine Uhrzeit im Format HH:MM: %w", c.Sync.StartTime, err)
+	}
+	loc = time.Local
+	if c.Sync.Timezone != "" {
+		loc, err = time.LoadLocation(c.Sync.Timezone)
+		if err != nil {
+			return 0, 0, nil, fmt.Errorf("sync.timezone %q ist keine gültige Zeitzone: %w", c.Sync.Timezone, err)
+		}
+	}
+	return t.Hour(), t.Minute(), loc, nil
 }
 
 // DefaultPath ist der Ort, an dem die Konfiguration ohne --config erwartet
@@ -118,6 +146,9 @@ func (c *Config) validate() error {
 	}
 	if c.Jira.APIToken == "" {
 		return fmt.Errorf("Umgebungsvariable %s ist nicht gesetzt", EnvJiraAPIToken)
+	}
+	if _, _, _, err := c.StartClock(); err != nil {
+		return err
 	}
 	return nil
 }

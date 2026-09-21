@@ -18,6 +18,7 @@ import (
 	"moco-jira-bridge/internal/moco"
 	"moco-jira-bridge/internal/parse"
 	"moco-jira-bridge/internal/report"
+	syncpkg "moco-jira-bridge/internal/sync"
 	"moco-jira-bridge/internal/timerange"
 )
 
@@ -103,10 +104,16 @@ func run() int {
 		return fail(err)
 	}
 
+	hour, minute, loc, err := cfg.StartClock()
+	if err != nil {
+		return fail(err)
+	}
+
 	application := &app.App{
 		Moco:            moco.New(cfg.Moco, parser, httpClient),
 		Jira:            target,
 		ExpectedMarkers: cfg.ExpectedMarkers(),
+		Clock:           syncpkg.Clock{Hour: hour, Minute: minute, Loc: loc},
 	}
 
 	rng, err := timerange.Resolve(*month, *from, *to, *until, time.Now())
