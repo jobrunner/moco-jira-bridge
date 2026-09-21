@@ -139,12 +139,17 @@ func checkTempoEndpoints(ctx context.Context, cfg *config.Config, c *http.Client
 		}
 		resp.Body.Close()
 
-		found := resp.StatusCode != http.StatusNotFound
-		detail := fmt.Sprintf("Status %d — nicht vorhanden", resp.StatusCode)
-		if found {
-			detail = fmt.Sprintf("Status %d — Endpunkt antwortet, Variante kommt in Frage", resp.StatusCode)
+		var ok bool
+		var detail string
+		switch {
+		case resp.StatusCode == http.StatusNotFound:
+			ok, detail = false, fmt.Sprintf("Status %d — nicht vorhanden", resp.StatusCode)
+		case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+			ok, detail = false, fmt.Sprintf("Status %d — keine Aussage möglich, solange die Jira-Anmeldung fehlschlägt", resp.StatusCode)
+		default:
+			ok, detail = true, fmt.Sprintf("Status %d — Endpunkt antwortet, Variante kommt in Frage", resp.StatusCode)
 		}
-		checks = append(checks, Check{Name: p.name, OK: found, Detail: detail})
+		checks = append(checks, Check{Name: p.name, OK: ok, Detail: detail})
 	}
 	return checks
 }
