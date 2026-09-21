@@ -1,8 +1,10 @@
 # moco-jira-bridge
 
-Gleicht Moco-Zeitbuchungen mit Jira/Tempo ab. Moco ist immer das führende
-System — dieses Tool schreibt ausschließlich nach Jira, nie nach Moco, und
-es löscht oder ändert dort nichts.
+Harnessfreies AdHoc-CLI-Tool, das Moco-Zeitbuchungen mit einem gültigen JIRA-Ticket und konfigurierten Moco-Projekten mit einem Jira/Tempo abgleicht.
+
+Moco ist immer das führende System und das Tool synct ausschließlich nach Jira (in die worklogs der Tickets), nie nach Moco. Aber aktuell auch nicht ins "Schatten"-Tempo. Daraus folgt: Fehlverhalten des Tools wird mit handgeschriebenen CURL-Requests nicht unter einem Monat bestraft.
+
+Eine persönliche Bitte, sprich Dschira, nicht Tschaira. Man sagt auch nicht Kwentin Tarantaino.
 
 ## Installation
 
@@ -14,10 +16,18 @@ es löscht oder ändert dort nichts.
     cp config.example.yaml ~/.config/moco-jira-bridge/config.yaml
     $EDITOR ~/.config/moco-jira-bridge/config.yaml
 
-Tokens kommen aus der Umgebung, nie aus der Datei:
+Es werden ein Moco-API-Token und weil das Tooling aktuell direkt auf die JIRA-Worklogs geht, auch ein JIRA-API-Token (bitte) mit etwas Einschränkung, benötigt:
 
-    export MOCO_API_KEY=...
-    export JIRA_API_TOKEN=...
+- Scope-Typ: Classic
+- Scope Namen:
+  - read:me
+  - read:jira-work
+  - write:jira-work
+
+Die Tokens müssen dann ins Environment (z.B. direnv):
+
+    export MOCO_API_KEY="...
+    export JIRA_API_TOKEN="...
 
 Dann prüfen, ob beide Systeme erreichbar sind:
 
@@ -56,31 +66,34 @@ in Tempo; abgerechnet wird der Zeitbetrag.
 Ein zweiter Lauf ohne Änderungen in Moco ist damit automatisch ein No-Op —
 es gibt weder Marker in den Jira-Kommentaren noch eine lokale State-Datei.
 
-Was gemeldet, aber nicht automatisch behoben wird:
+Was zwar gemeldet, nicht aber automatisch behoben wird:
 
-- Moco-Buchungen ohne erkennbaren Ticket-Key
-- Buchungen mit einem Marker, der dem Moco-Projekt widerspricht (die
-  TG/RM-Sichtprüfung; ein fehlender Marker ist kein Problem)
+- Moco-Buchungen ohne erkennbaren Ticket-Key (keine Arme, keine Kekse)
+- Buchungen mit einem Marker, der dem Moco-Projekt widerspricht (nur für meine wirre Sichtprüfung; ein fehlender Marker ist kein Problem)
 - Worklogs in Jira ohne Entsprechung in Moco
 
-Buchungen auf Tickets, die in Jira nicht existieren (z.B. das
-Platzhalter-Ticket PHT-0), werden auf `ticket.default_ticket` umgeleitet und
-als Hinweis gemeldet — der Hinweis beeinflusst den Exit-Code nicht, macht
-aber Tippfehler in Ticket-Nummern sichtbar.
+Buchungen auf Tickets, die in Jira nicht existieren (z.B. ein
+Platzhalter-Ticket, wie es manche Team gerne machen  PROJ-0), werden auf `ticket.default_ticket` umgeleitet und als Hinweis gemeldet. Der Hinweis beeinflusst den Exit-Code nicht, macht
+aber Tippfehler in Ticket-Nummern sichtbar. Für rote consolen bitte ein PR aufmachen.
 
-Ein Fehler bei einem einzelnen Eintrag bricht den Lauf nie ab. Er erscheint
+Ein Fehler bei einem einzelnen Eintrag bricht den Lauf nicht ab. Er erscheint
 beim nächsten Start erneut, solange er nicht behoben ist.
 
 ## Exit-Codes
 
-| Code | Bedeutung |
-|---|---|
-| 0 | alles stimmt überein |
-| 1 | Abweichungen oder Hinweise |
-| 2 | Konfigurations- oder Verbindungsfehler |
+| Code | Bedeutung                              |
+| ---- | -------------------------------------- |
+| 0    | alles stimmt überein                  |
+| 1    | Abweichungen oder Hinweise             |
+| 2    | Konfigurations- oder Verbindungsfehler |
 
-## Noch offen
+## Offen gelassen
 
-- `tempo-cloud` und `tempo-server` sind Stubs. `mjb doctor` sagt, welche
+- `tempo-cloud` und `tempo-server` sind Stubs. `mjb doctor` meldet, welche
   Variante die Kundeninstanz anbietet; die passende Implementierung wird
-  danach ergänzt.
+  danach ergänzt. Unit-Tests sind zwar da, aber keine Gremlins und auch sonst keine Gates.
+- In der CI ausführen, für ganz selbstbewusste Anwender.
+
+## Lizenz
+
+WTFPL
