@@ -37,6 +37,29 @@ func TestCheckMarkersPraefixReichtAus(t *testing.T) {
 	}
 }
 
+func TestCheckMarkersMarkerAlsLetztesKommaElement(t *testing.T) {
+	// Übliche Schreibweise: "(Daily, RM)" — der Marker steht hinten.
+	cases := []string{"Daily, RM", "Klärung, Umsetzung, RM", "RM", "rm", "Daily,RM"}
+	for _, marker := range cases {
+		entries := []model.Entry{
+			{Ticket: "ABC-1", ProjectID: "1002", Marker: marker, Date: day(18)},
+		}
+		if problems := CheckMarkers(entries, map[string]string{"1002": "RM"}); len(problems) != 0 {
+			t.Fatalf("Marker %q sollte als RM gelten, got %+v", marker, problems)
+		}
+	}
+}
+
+func TestCheckMarkersSubstringReichtNicht(t *testing.T) {
+	// "FIRMware" enthält RM, ist aber keiner.
+	entries := []model.Entry{
+		{Ticket: "ABC-1", ProjectID: "1002", Marker: "Firmware", Date: day(18)},
+	}
+	if problems := CheckMarkers(entries, map[string]string{"1002": "RM"}); len(problems) != 1 {
+		t.Fatalf("Substring darf nicht als Marker gelten, got %+v", problems)
+	}
+}
+
 func TestCheckMarkersMeldetFehlendenMarker(t *testing.T) {
 	entries := []model.Entry{
 		{Ticket: "ABC-1", ProjectID: "1001", Marker: "", Date: day(18)},

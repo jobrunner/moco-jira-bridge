@@ -40,12 +40,15 @@ func CheckMarkers(moco []model.Entry, expected map[string]string) []model.Proble
 	return problems
 }
 
-// markerMatches akzeptiert Zusätze hinter dem Marker: "RM Sprint 4" gilt als "RM".
+// markerMatches akzeptiert den Marker an jeder Komma-Position und mit Zusatz:
+// "Daily, RM", "Klärung, Umsetzung, RM" und "RM Sprint 4" gelten alle als "RM".
 func markerMatches(got, want string) bool {
-	got = strings.TrimSpace(strings.ToUpper(got))
 	want = strings.TrimSpace(strings.ToUpper(want))
-	if got == want {
-		return true
+	for _, part := range strings.Split(strings.ToUpper(got), ",") {
+		part = strings.TrimSpace(part)
+		if part == want || strings.HasPrefix(part, want+" ") {
+			return true
+		}
 	}
-	return strings.HasPrefix(got, want+" ")
+	return false
 }
