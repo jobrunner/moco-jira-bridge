@@ -171,6 +171,23 @@ func (c *Cloud) worklogsForIssue(ctx context.Context, key string, from, to time.
 	return entries, nil
 }
 
+// IssueExists prüft per Einzelabruf, ob das Ticket existiert.
+func (c *Cloud) IssueExists(ctx context.Context, key string) (bool, error) {
+	_, status, err := c.do(ctx, http.MethodGet,
+		"/rest/api/3/issue/"+url.PathEscape(key)+"?fields=id", nil)
+	if err != nil {
+		return false, err
+	}
+	switch status {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		return false, fmt.Errorf("Existenzprüfung für %s antwortet mit Status %d", key, status)
+	}
+}
+
 // Create legt einen Worklog zum geplanten Startzeitpunkt an. Die Uhrzeiten
 // sind nur Kosmetik für die manuelle Prüfung in Tempo — abgerechnet wird der
 // Zeitbetrag; deshalb staffelt der Planer sie lediglich überlappungsfrei.

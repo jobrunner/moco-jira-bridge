@@ -59,8 +59,14 @@ es gibt weder Marker in den Jira-Kommentaren noch eine lokale State-Datei.
 Was gemeldet, aber nicht automatisch behoben wird:
 
 - Moco-Buchungen ohne erkennbaren Ticket-Key
-- Buchungen, deren Marker nicht zum Moco-Projekt passt (die TG/RM-Sichtprüfung)
+- Buchungen mit einem Marker, der dem Moco-Projekt widerspricht (die
+  TG/RM-Sichtprüfung; ein fehlender Marker ist kein Problem)
 - Worklogs in Jira ohne Entsprechung in Moco
+
+Buchungen auf Tickets, die in Jira nicht existieren (z.B. das
+Platzhalter-Ticket PHT-0), werden auf `ticket.default_ticket` umgeleitet und
+als Hinweis gemeldet — der Hinweis beeinflusst den Exit-Code nicht, macht
+aber Tippfehler in Ticket-Nummern sichtbar.
 
 Ein Fehler bei einem einzelnen Eintrag bricht den Lauf nie ab. Er erscheint
 beim nächsten Start erneut, solange er nicht behoben ist.

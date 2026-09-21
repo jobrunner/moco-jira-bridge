@@ -20,15 +20,13 @@ func CheckMarkers(moco []model.Entry, expected map[string]string) []model.Proble
 		if !ok || want == "" {
 			continue
 		}
-		if markerMatches(e.Marker, want) {
+		// Kein Marker ist kein Widerspruch — die Projekt-Zuordnung steht in
+		// Moco fest; nur ein falscher Marker deutet auf eine Fehlbuchung hin.
+		if e.Marker == "" || markerMatches(e.Marker, want) {
 			continue
 		}
 		detail := fmt.Sprintf("Projekt %s erwartet Marker %q, Buchung hat %q",
 			e.ProjectID, want, e.Marker)
-		if e.Marker == "" {
-			detail = fmt.Sprintf("Projekt %s erwartet Marker %q, Buchung hat keinen",
-				e.ProjectID, want)
-		}
 		problems = append(problems, model.Problem{
 			Kind:   model.ProblemMarkerMismatch,
 			Ticket: e.Ticket,

@@ -33,9 +33,12 @@ func FormatDuration(d time.Duration) string {
 }
 
 // ExitCode ist 0, wenn alles übereinstimmt und nichts gemeldet wurde.
+// Reine Hinweise (Ticket-Umleitungen) zählen nicht.
 func (r Report) ExitCode() int {
-	if len(r.Problems) > 0 {
-		return 1
+	for _, p := range r.Problems {
+		if p.Kind != model.ProblemTicketRemapped {
+			return 1
+		}
 	}
 	for _, d := range r.Diffs {
 		if d.Delta() != 0 {

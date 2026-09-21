@@ -18,6 +18,7 @@ jira:
 ticket:
   pattern: '^([A-Z][A-Z0-9]+-\d+)'
   marker_pattern: '\(([^)]+)\)'
+  default_ticket: PHT-7771   # fängt Buchungen auf nicht existierende Tickets (z.B. PHT-0) auf; leer = aus
 
 sync:
   start_time: "08:30"        # erster Worklog des Tages; weitere folgen lückenlos (Default 09:00)

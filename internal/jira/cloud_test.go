@@ -107,6 +107,25 @@ func TestCreateSchicktStartedUndSekunden(t *testing.T) {
 	}
 }
 
+func TestIssueExists(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/issue/PHT-7771") {
+			_, _ = w.Write([]byte(`{"id":"1"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	c := testCloud(t, srv)
+	if ok, err := c.IssueExists(context.Background(), "PHT-7771"); err != nil || !ok {
+		t.Fatalf("PHT-7771 sollte existieren: ok=%v err=%v", ok, err)
+	}
+	if ok, err := c.IssueExists(context.Background(), "PHT-0"); err != nil || ok {
+		t.Fatalf("PHT-0 sollte nicht existieren: ok=%v err=%v", ok, err)
+	}
+}
+
 func TestCreateFehlerBeiStatus400(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)

@@ -28,6 +28,11 @@ type fakeJira struct {
 	entries []model.Entry
 	created []jira.Worklog
 	failOn  string
+	missing map[string]bool // Tickets, die in Jira nicht existieren
+}
+
+func (f *fakeJira) IssueExists(ctx context.Context, key string) (bool, error) {
+	return !f.missing[key], nil
 }
 
 func (f *fakeJira) Worklogs(ctx context.Context, from, to time.Time) ([]model.Entry, error) {
@@ -186,6 +191,52 @@ func TestSyncMeldetEintragOhneTicketUndBuchtDenRest(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("fehlender Ticket-Key nicht gemeldet: %+v", rep.Problems)
+	}
+}
+
+func TestNichtExistierendesTicketWirdUmgeleitet(t *testing.T) {
+	j := &fakeJira{missing: map[string]bool{"PHT-0": true}}
+	a := &App{
+		Moco: &fakeMoco{entries: []model.Entry{
+			mocoEntry("PHT-0", 18, 60, "TG", "1001"),
+			mocoEntry("PHT-7771", 18, 30, "TG", "1001"),
+		}},
+		Jira:            j,
+		ExpectedMarkers: map[string]string{"1001": "TG"},
+		DefaultTicket:   "PHT-7771",
+	}
+	rep, err := a.Sync(context.Background(), testRange, true)
+	if err != nil {
+		t.Fatalf("Sync: %v", err)
+	}
+	// PHT-0 (60m) und PHT-7771 (30m) verschmelzen zu einer 90m-Buchung.
+	if len(j.created) != 1 || j.created[0].Ticket != "PHT-7771" || j.created[0].Duration != 90*time.Minute {
+		t.Fatalf("erwarte eine 90m-Buchung auf PHT-7771, got %+v", j.created)
+	}
+	var hint bool
+	for _, p := range rep.Problems {
+		if p.Kind == model.ProblemTicketRemapped {
+			hint = true
+		}
+	}
+	if !hint {
+		t.Fatalf("Umleitung muss als Hinweis erscheinen: %+v", rep.Problems)
+	}
+}
+
+func TestUmleitungOhneDefaultTicketBleibtAus(t *testing.T) {
+	j := &fakeJira{missing: map[string]bool{"PHT-0": true}}
+	a := &App{
+		Moco:            &fakeMoco{entries: []model.Entry{mocoEntry("PHT-0", 18, 60, "TG", "1001")}},
+		Jira:            j,
+		ExpectedMarkers: map[string]string{"1001": "TG"},
+	}
+	rep, err := a.Sync(context.Background(), testRange, false)
+	if err != nil {
+		t.Fatalf("Sync: %v", err)
+	}
+	if len(rep.Planned) != 1 || rep.Planned[0].Ticket != "PHT-0" {
+		t.Fatalf("ohne default_ticket keine Umleitung, got %+v", rep.Planned)
 	}
 }
 

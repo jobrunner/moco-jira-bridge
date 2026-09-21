@@ -60,12 +60,14 @@ func TestCheckMarkersSubstringReichtNicht(t *testing.T) {
 	}
 }
 
-func TestCheckMarkersMeldetFehlendenMarker(t *testing.T) {
+func TestCheckMarkersFehlenderMarkerIstKeinProblem(t *testing.T) {
+	// Vergessene Klammer/vergessener Marker: die Projekt-Zuordnung kommt aus
+	// Moco — gemeldet wird nur ein vorhandener, widersprechender Marker.
 	entries := []model.Entry{
 		{Ticket: "ABC-1", ProjectID: "1001", Marker: "", Date: day(18)},
 	}
-	if problems := CheckMarkers(entries, map[string]string{"1001": "TG"}); len(problems) != 1 {
-		t.Fatalf("fehlender Marker sollte gemeldet werden, got %+v", problems)
+	if problems := CheckMarkers(entries, map[string]string{"1001": "TG"}); len(problems) != 0 {
+		t.Fatalf("fehlender Marker darf nicht gemeldet werden, got %+v", problems)
 	}
 }
 

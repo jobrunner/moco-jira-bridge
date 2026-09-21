@@ -25,6 +25,9 @@ type Worklog struct {
 type Target interface {
 	Worklogs(ctx context.Context, from, to time.Time) ([]model.Entry, error)
 	Create(ctx context.Context, w Worklog) error
+	// IssueExists sagt, ob ein Ticket in Jira existiert — Basis für die
+	// Umleitung auf das Default-Ticket.
+	IssueExists(ctx context.Context, key string) (bool, error)
 }
 
 func NewTarget(cfg config.JiraConfig, httpClient *http.Client) (Target, error) {

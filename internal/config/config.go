@@ -45,6 +45,9 @@ type JiraConfig struct {
 type TicketConfig struct {
 	Pattern       string `yaml:"pattern"`
 	MarkerPattern string `yaml:"marker_pattern"`
+	// DefaultTicket fängt Buchungen auf, deren Ticket in Jira nicht existiert
+	// (z.B. das Platzhalter-Ticket PHT-0). Leer = Feature aus.
+	DefaultTicket string `yaml:"default_ticket"`
 }
 
 type SyncConfig struct {

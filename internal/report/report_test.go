@@ -52,6 +52,13 @@ func TestExitCodeBeiProblemOhneAbweichung(t *testing.T) {
 	}
 }
 
+func TestExitCodeHinweisZaehltNicht(t *testing.T) {
+	r := Report{Problems: []model.Problem{{Kind: model.ProblemTicketRemapped, Detail: "x"}}}
+	if got := r.ExitCode(); got != 0 {
+		t.Fatalf("ExitCode = %d, want 0 — Umleitungen sind nur Hinweise", got)
+	}
+}
+
 func TestWriteTextZeigtAbweichungenUndProbleme(t *testing.T) {
 	diffs := []model.Diff{{Ticket: "ABC-1", Date: day(18), Want: 120 * time.Minute, Have: 90 * time.Minute}}
 	r := Report{

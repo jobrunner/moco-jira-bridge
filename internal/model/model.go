@@ -50,6 +50,10 @@ const (
 	ProblemMarkerMismatch ProblemKind = "marker-konflikt"
 	ProblemJiraOverhang   ProblemKind = "jira-ueberhang"
 	ProblemAPIError       ProblemKind = "api-fehler"
+	// ProblemTicketRemapped ist ein reiner Hinweis: ein nicht existierendes
+	// Ticket wurde auf das Default-Ticket umgeleitet. Beeinflusst den
+	// Exit-Code nicht.
+	ProblemTicketRemapped ProblemKind = "ticket-umgeleitet"
 )
 
 // Problem ist eine Auffälligkeit, die gemeldet, aber nicht automatisch behoben wird.

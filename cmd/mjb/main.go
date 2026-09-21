@@ -114,6 +114,7 @@ func run() int {
 		Jira:            target,
 		ExpectedMarkers: cfg.ExpectedMarkers(),
 		Clock:           syncpkg.Clock{Hour: hour, Minute: minute, Loc: loc},
+		DefaultTicket:   cfg.Ticket.DefaultTicket,
 	}
 
 	rng, err := timerange.Resolve(*month, *from, *to, *until, time.Now())

@@ -101,6 +101,10 @@ func (f *fakeTarget) Worklogs(ctx context.Context, from, to time.Time) ([]model.
 	return nil, nil
 }
 
+func (f *fakeTarget) IssueExists(ctx context.Context, key string) (bool, error) {
+	return true, nil
+}
+
 func (f *fakeTarget) Create(ctx context.Context, w jira.Worklog) error {
 	if w.Ticket == f.failOn {
 		return errors.New("Issue does not exist")
