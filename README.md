@@ -73,5 +73,3 @@ beim nächsten Start erneut, solange er nicht behoben ist.
 - `tempo-cloud` und `tempo-server` sind Stubs. `mjb doctor` sagt, welche
   Variante die Kundeninstanz anbietet; die passende Implementierung wird
   danach ergänzt.
-- Der Jira-Cloud-Client paginiert nicht: Bei mehr als 200 Issues mit eigenen
-  Worklogs im Zeitraum fehlen Einträge.
