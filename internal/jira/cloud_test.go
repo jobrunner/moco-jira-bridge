@@ -13,7 +13,8 @@ import (
 	"moco-jira-bridge/internal/config"
 )
 
-const searchJSON = `{"issues":[{"key":"ABC-1234"}]}`
+const searchPage1 = `{"issues":[{"key":"ABC-1234"}],"nextPageToken":"tok2"}`
+const searchPage2 = `{"issues":[]}`
 
 const worklogJSON = `{"worklogs":[
   {"id":"9001","started":"2026-09-18T09:00:00.000+0200","timeSpentSeconds":3600,
@@ -28,9 +29,13 @@ func cloudServer(t *testing.T, onCreate func(body map[string]any)) *httptest.Ser
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case strings.Contains(r.URL.Path, "/search"):
+		case strings.Contains(r.URL.Path, "/search/jql"):
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(searchJSON))
+			if r.URL.Query().Get("nextPageToken") == "tok2" {
+				_, _ = w.Write([]byte(searchPage2))
+				return
+			}
+			_, _ = w.Write([]byte(searchPage1))
 		case strings.HasSuffix(r.URL.Path, "/worklog") && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(worklogJSON))

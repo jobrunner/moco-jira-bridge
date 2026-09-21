@@ -65,6 +65,7 @@ type searchResponse struct {
 	Issues []struct {
 		Key string `json:"key"`
 	} `json:"issues"`
+	NextPageToken string `json:"nextPageToken"`
 }
 
 type worklogResponse struct {
@@ -82,29 +83,47 @@ type worklogResponse struct {
 // Worklogs findet erst die Issues mit eigenen Worklogs im Zeitraum und lädt
 // dann deren Worklogs. Der Umweg über JQL findet auch Überhänge auf Tickets,
 // die in Moco gar nicht vorkommen.
+//
+// Der alte Endpunkt /rest/api/3/search liefert seit 2025 nur noch 410 Gone;
+// der Nachfolger /search/jql paginiert per nextPageToken.
 func (c *Cloud) Worklogs(ctx context.Context, from, to time.Time) ([]model.Entry, error) {
 	jql := fmt.Sprintf("worklogAuthor = currentUser() AND worklogDate >= %q AND worklogDate <= %q",
 		from.Format("2006-01-02"), to.Format("2006-01-02"))
-	q := url.Values{}
-	q.Set("jql", jql)
-	q.Set("fields", "key")
-	q.Set("maxResults", "200")
 
-	raw, status, err := c.do(ctx, http.MethodGet, "/rest/api/3/search?"+q.Encode(), nil)
-	if err != nil {
-		return nil, err
-	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("Jira-Suche antwortet mit Status %d", status)
-	}
-	var search searchResponse
-	if err := json.Unmarshal(raw, &search); err != nil {
-		return nil, fmt.Errorf("Jira-Suchantwort ist kein erwartetes JSON: %w", err)
+	var issues []string
+	pageToken := ""
+	for {
+		q := url.Values{}
+		q.Set("jql", jql)
+		q.Set("fields", "key")
+		q.Set("maxResults", "100")
+		if pageToken != "" {
+			q.Set("nextPageToken", pageToken)
+		}
+
+		raw, status, err := c.do(ctx, http.MethodGet, "/rest/api/3/search/jql?"+q.Encode(), nil)
+		if err != nil {
+			return nil, err
+		}
+		if status != http.StatusOK {
+			return nil, fmt.Errorf("Jira-Suche antwortet mit Status %d", status)
+		}
+		var search searchResponse
+		if err := json.Unmarshal(raw, &search); err != nil {
+			return nil, fmt.Errorf("Jira-Suchantwort ist kein erwartetes JSON: %w", err)
+		}
+		for _, issue := range search.Issues {
+			issues = append(issues, issue.Key)
+		}
+		if search.NextPageToken == "" {
+			break
+		}
+		pageToken = search.NextPageToken
 	}
 
 	var entries []model.Entry
-	for _, issue := range search.Issues {
-		issueEntries, err := c.worklogsForIssue(ctx, issue.Key, from, to)
+	for _, key := range issues {
+		issueEntries, err := c.worklogsForIssue(ctx, key, from, to)
 		if err != nil {
 			return nil, err
 		}
