@@ -52,8 +52,12 @@ type Config struct {
 	Ticket TicketConfig `yaml:"ticket"`
 }
 
-// DefaultPath ist der Ort, an dem die Konfiguration ohne --config erwartet wird.
+// DefaultPath ist der Ort, an dem die Konfiguration ohne --config erwartet
+// wird. Eine config.yaml im Arbeitsverzeichnis gewinnt; sonst der User-Config-Pfad.
 func DefaultPath() string {
+	if _, err := os.Stat("config.yaml"); err == nil {
+		return "config.yaml"
+	}
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return filepath.Join(dir, "moco-jira-bridge", "config.yaml")
 	}

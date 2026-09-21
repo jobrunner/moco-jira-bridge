@@ -93,6 +93,24 @@ func TestLoadSetztDefaultPatterns(t *testing.T) {
 	}
 }
 
+func TestDefaultPathBevorzugtArbeitsverzeichnis(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	if err := os.WriteFile(filepath.Join(dir, "config.yaml"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := DefaultPath(); got != "config.yaml" {
+		t.Fatalf("DefaultPath() = %q, want config.yaml im Arbeitsverzeichnis", got)
+	}
+}
+
+func TestDefaultPathFallbackOhneLokaleDatei(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if got := DefaultPath(); got == "config.yaml" {
+		t.Fatal("ohne lokale Datei darf nicht das Arbeitsverzeichnis gewinnen")
+	}
+}
+
 func TestExpectedMarkers(t *testing.T) {
 	t.Setenv("MOCO_API_KEY", "x")
 	t.Setenv("JIRA_API_TOKEN", "y")
